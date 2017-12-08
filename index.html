@@ -162,6 +162,113 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-Oracle数据库启动失败" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/12/06/Oracle数据库启动失败/">Oracle数据库启动失败</a>
+    </h1>
+  
+
+        
+        <a href="/2017/12/06/Oracle数据库启动失败/" class="archive-article-date">
+  	<time datetime="2017-12-06T09:06:03.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-12-06</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h4 id="最近在学习Oracle数据库，使用的时候发现这样一个问题："><a href="#最近在学习Oracle数据库，使用的时候发现这样一个问题：" class="headerlink" title="最近在学习Oracle数据库，使用的时候发现这样一个问题："></a>最近在学习Oracle数据库，使用的时候发现这样一个问题：</h4><p>修改默认SGA_TARGET值后，尝试重启数据库，提示错误： </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">startup</div><div class="line">ORA-01078: failure in processing system parameters</div><div class="line">ORA-00838: Specified value of MEMORY_TARGET is too small, needs to be at least 1036M</div></pre></td></tr></table></figure>
+<p>由于此时数据库已经关闭，无法重新修改SGA_TARGET的值。</p>
+<p>我在网上搜索了一下解决办法，需要修改启动配置文件pfile和spfile。但是我尝试使用如下方法之后，并没有成功启动：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">create</span> pfile <span class="keyword">from</span> <span class="keyword">spfile</span>;//利用spfile文件创建pfile</div><div class="line">手动修改pfile(initXE.ora)将SGA\_TARGET那一行删掉</div><div class="line"><span class="keyword">create</span> <span class="keyword">spfile</span> <span class="keyword">from</span> pfile;//再使用pfile创建新的</div></pre></td></tr></table></figure>
+<blockquote>
+<p>注：我的数据库默认SPFILEXE.ora文件位于”D:\oraclexe\app\oracle\product\11.2.0\server\database”</p>
+</blockquote>
+<p> 我使用的数据库版本是Oracle 11g XE，错误就出在第二步：<br> 无论我怎么create，创建的ora文件里面都只有一行指向”D:\oraclexe\app\oracle\product\11.2.0\server\dbs\spfile.ora”的内容，而不是我想要的启动配置文件。</p>
+<p> 继续在网上搜索之后，一篇文章给了我提示：<a href="http://blog.sina.com.cn/s/blog_69fa6cc70101dscf.html" target="_blank" rel="external">oracle11g pfile 与spfile</a>，文中的解决办法是创建一个新的数据库，使用新数据库的pfile文件生成spfile文件，然后对其中部分参数进行更改。</p>
+<blockquote>
+<p>init.ora即为pfile文件</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">//文章作者的pfile文件内容</div><div class="line">mydb.__db_cache_size=373293056</div><div class="line">mydb.__java_pool_size=4194304</div><div class="line">mydb.__large_pool_size=4194304</div><div class="line">mydb.__oracle_base=&apos;D:\oracle\app\Administrator&apos;#ORACLE_BASE set from environment</div><div class="line">mydb.__pga_aggregate_target=398458880</div><div class="line">mydb.__sga_target=591396864</div><div class="line">mydb.__shared_io_pool_size=0</div><div class="line">mydb.__shared_pool_size=201326592</div><div class="line">mydb.__streams_pool_size=0</div><div class="line">*.audit_file_dest=&apos;D:\oracle\app\Administrator\admin\mydb\adump&apos;</div><div class="line">*.audit_trail=&apos;db&apos;</div><div class="line">*.compatible=&apos;11.2.0.0.0&apos;</div><div class="line">*.control_files=&apos;D:\oracle\app\Administrator\oradata\mydb\control01.ctl&apos;,&apos;D:\oracle\app\Administrator\oradata\mydb\control02.ctl&apos;</div><div class="line">*.db_block_size=8192</div><div class="line">*.db_domain=&apos;&apos;</div><div class="line">*.db_name=&apos;mydb&apos;</div><div class="line">*.diagnostic_dest=&apos;D:\oracle\app\Administrator&apos;</div><div class="line">*.dispatchers=&apos;(PROTOCOL=TCP) (SERVICE=mydbXDB)&apos;</div><div class="line">*.local_listener=&apos;LISTENER_MYDB&apos;</div><div class="line">*.memory_target=988807168</div><div class="line">*.nls_language=&apos;SIMPLIFIED CHINESE&apos;</div><div class="line">*.nls_territory=&apos;CHINA&apos;</div><div class="line">*.open_cursors=300</div><div class="line">*.processes=150</div><div class="line">*.remote_login_passwordfile=&apos;EXCLUSIVE&apos;</div><div class="line">*.undo_tablespace=&apos;UNDOTBS1&apos;</div></pre></td></tr></table></figure>
+<p> 我尝试create database，然而数据库服务器已经关闭，又不清楚其它的方式创建。</p>
+<p> 琢磨一会后，我发现”D:\oraclexe\app\oracle\product\11.2.0\server\dbs”目录下的SPFILEXE.ora文件中除了乱码，还包含有类似于上面贴出的pfile内容。</p>
+<pre><code> C&quot;               +                                                                               ?  杢W9                                                                                                                                                                                                                                                                                                                                                                                                                C  C&quot;           5  xe.__db_cache_size=243269632
+xe.__java_pool_size=4194304
+xe.__large_pool_size=4194304
+xe.__oracle_base=&apos;D:\oraclexe\app\oracle&apos;#ORACLE_BASE set from environment
+xe.__pga_aggregate_target=432013312
+xe.__sga_target=641728512
+xe.__shared_io_pool_size=0
+xe.__shared_pool_size=377487360
+xe.__streams_pool_size=0
+*.audit_file_dest=&apos;D:\oraclexe\app\oracle\admin\XE\adump&apos;
+*.compatible=&apos;11.2.0.0.0&apos;
+*.control_files=&apos;D:\oraclexe\app\oracle\oradata\XE\control.dbf&apos;
+*.db_name=&apos;XE&apos;
+*.DB_RECOVERY_FILEC  C&quot;           
+  _DEST_SIZE=10G
+*.DB_RECOVERY_FILE_DEST=&apos;D:\oraclexe\app\oracle\fast_recovery_area&apos;
+*.diagnostic_dest=&apos;D:\oraclexe\app\oracle\.&apos;
+*.dispatchers=&apos;(PROTOCOL=TCP) (SERVICE=XEXDB)&apos;
+*.job_queue_processes=4
+*.memory_target=1024M
+*.open_cursors=300
+*.query_rewrite_enabled=&apos;TRUE&apos;
+*.remote_login_passwordfile=&apos;EXCLUSIVE&apos;
+*.sessions=20
+*.sga_target=1073741824 //这一行是罪魁祸首，删除之
+*.shared_servers=4
+*.undo_management=&apos;AUTO&apos;
+*.undo_tablespace=&apos;UNDOTBS1&apos;
+</code></pre><p>对比之后发现基本一致，于是删除了不必要的代码后我把这里面的内容复制到server\database\下的initXE.ora文件中。继而使用这个pfile创建spfile，最后成功启动数据库。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2017/12/06/Oracle数据库启动失败/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="p-First-page" class="article article-type-p  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
